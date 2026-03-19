@@ -72,13 +72,13 @@
         #health-bar { width: 50%; height: 100%; background: var(--green); float: right; transition: width 0.2s; }
 
         #receptor-row { display: flex; justify-content: space-around; padding-top: 25px; position: relative; z-index: 5; }
-        .receptor { width: 45px; height: 45px; border: 3px solid #333; display: flex; justify-content: center; align-items: center; font-size: 1.3rem; border-radius: 10px; }
+        .receptor { width: 45px; height: 45px; border: 3px solid #333; display: flex; justify-content: center; align-items: center; font-size: 1.3rem; border-radius: 10px; transition: 0.1s; }
         .note { position: absolute; width: 45px; height: 45px; display: flex; justify-content: center; align-items: center; font-size: 1.3rem; font-weight: bold; border-radius: 10px; top: 110%; }
         
         .active { transform: scale(1.15); background: white !important; color: black !important; }
 
-        #mobile-controls { display: flex; width: 100%; max-width: 400px; height: 18vh; justify-content: space-around; align-items: center; padding: 5px 0; }
-        .m-btn { width: 65px; height: 65px; border-radius: 50%; border: none; font-size: 1.6rem; color: white; }
+        #mobile-controls { display: none; width: 100%; max-width: 400px; height: 18vh; justify-content: space-around; align-items: center; padding: 5px 0; }
+        .m-btn { width: 65px; height: 65px; border-radius: 50%; border: none; font-size: 1.6rem; color: white; cursor: pointer; }
 
         footer { font-size: 0.7rem; color: #555; margin-top: auto; padding-bottom: 5px; }
 
@@ -99,7 +99,7 @@
         <div id="start-screen" class="overlay">
             <h2 class="menu-title">Lendário Beat Clash</h2>
             <p class="menu-creator">CRIADORA: LENDÁRIO STUDIO</p>
-            <p class="music-credits">Música: Pinball Spring<br>Link: https://files.catbox.moe/es4e1h.mp3</p>
+            <p class="music-credits">Música: Pinball Spring</p>
             <button class="menu-btn btn-start" onclick="startGame()">Jogar Agora</button>
         </div>
 
@@ -120,6 +120,7 @@
         <div id="note-layer"></div>
     </div>
 
+    <!-- BOTÕES DE CELULAR -->
     <div id="mobile-controls">
         <button class="m-btn" style="background:var(--purple)" onmousedown="handleInput(0)" ontouchstart="handleInput(0)">←</button>
         <button class="m-btn" style="background:var(--blue)" onmousedown="handleInput(1)" ontouchstart="handleInput(1)">↓</button>
@@ -136,8 +137,8 @@
         const healthBar = document.getElementById('health-bar');
         const gameOverScreen = document.getElementById('game-over-screen');
         const startScreen = document.getElementById('start-screen');
+        const mobileControls = document.getElementById('mobile-controls');
         
-        // Configuração de Áudio
         const gameMusic = new Audio('https://files.catbox.moe/es4e1h.mp3');
         gameMusic.loop = true;
 
@@ -157,12 +158,13 @@
 
         function startGame() {
             startScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none';
+            mobileControls.style.display = 'flex';
             document.getElementById('stats').style.visibility = 'visible';
             document.getElementById('health-wrap').style.visibility = 'visible';
             
-            // Inicia a música
             gameMusic.currentTime = 0;
-            gameMusic.play().catch(e => console.log("Aguardando interação para áudio"));
+            gameMusic.play().catch(e => console.log("Áudio aguardando clique"));
             
             resetGameState();
         }
@@ -172,26 +174,17 @@
             gameMusic.pause();
             clearInterval(spawnInterval);
             document.getElementById('final-score-text').innerText = "Pontos Totais: " + score;
+            
+            // Troca os botões de jogo pela tela de derrota
+            mobileControls.style.display = 'none'; 
             gameOverScreen.style.display = 'flex';
         }
 
         function restartGame() {
-            gameOverScreen.style.display = 'none';
             score = 0;
             combo = 0;
             health = 50;
-            speed = 0.8;
-            gameMusic.currentTime = 0;
-            gameMusic.play();
-            resetGameState();
-        }
-
-        function resetGameState() {
-            isPlaying = true;
-            noteLayer.innerHTML = ''; 
-            updateUI();
-            clearInterval(spawnInterval);
-            spawnInterval = setInterval(createNote, 800); // Ritmo ajustado para a música
+            startGame();
         }
 
         function continueGame() {
@@ -199,11 +192,22 @@
                 score -= 500;
                 health = 50;
                 gameOverScreen.style.display = 'none';
+                mobileControls.style.display = 'flex';
                 gameMusic.play();
-                resetGameState();
+                isPlaying = true;
+                updateUI();
+                spawnInterval = setInterval(createNote, 800);
             } else {
                 alert("Você precisa de 500 pontos!");
             }
+        }
+
+        function resetGameState() {
+            isPlaying = true;
+            noteLayer.innerHTML = ''; 
+            updateUI();
+            clearInterval(spawnInterval);
+            spawnInterval = setInterval(createNote, 800);
         }
 
         function createNote() {
@@ -252,7 +256,10 @@
         window.addEventListener('keydown', (e) => {
             const keys = ['ArrowLeft', 'ArrowDown', 'ArrowUp', 'ArrowRight'];
             const idx = keys.indexOf(e.key);
-            if (idx !== -1) handleInput(idx);
+            if (idx !== -1) {
+                e.preventDefault();
+                handleInput(idx);
+            }
         });
     </script>
 </body>
